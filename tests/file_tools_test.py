@@ -1,7 +1,10 @@
 import pytest
 import pandas as pd
+import os
+import fnmatch
+
 from src.valid_index import ValidIndex
-from src.file_tools import add_full_reference
+from src.file_tools import add_full_reference, read_processed_regs_into_dataframe
 
 def create_excon_index_checker():
     exclusion_list = ['Legal context', 'Introduction']
@@ -41,3 +44,18 @@ def test_add_full_reference():
     with pytest.raises(ValueError):
         add_full_reference(df_with_indent_reference_mismatch, index_checker)
 
+def test_read_processed_regs_into_dataframe():
+    index_checker = create_excon_index_checker()
+    non_text_labels = ['Table', 'Formula', 'Example', 'Definition']
+    dir_path = './inputs/'
+    file_list = []
+    for root, dir, files in os.walk(dir_path):
+        for file in files:
+            str = 'excon_manual*.txt'
+            if fnmatch.fnmatch(file, str):
+                file_path = os.path.join(root, file)
+                file_list.append(file_path)
+    df_excon, non_text = read_processed_regs_into_dataframe(file_list=file_list, valid_index_checker=index_checker, non_text_labels=non_text_labels)
+    assert len(df_excon) == 2607
+    assert len(non_text['Table']) == 100
+    assert len(non_text['Definition']) == 4

@@ -91,6 +91,17 @@ class TestValidIndex:
         assert index == '(aa)'
         assert remaining_text == 'the name and registration number of the applicant company; '
         
+        reference_on_exclusion_list = 'Legal context'
+        indent, index, remaining_text = self.index_checker.parse_line_of_text(reference_on_exclusion_list)
+        assert indent == 0
+        assert index == 'Legal context'
+        assert remaining_text == ''
+
+        reference_on_exclusion_list_wrong_indent = '    Legal context'
+        with pytest.raises(ValueError):
+            indent, index, remaining_text = self.index_checker.parse_line_of_text(reference_on_exclusion_list_wrong_indent)
+
+        
 
     def test___extract_reference_from_string(self):
         string_with_no_reference = 'Africa means any country forming part of the African Union.'

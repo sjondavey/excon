@@ -84,6 +84,12 @@ class ValidIndex():
         indent = indent // 4
         index, remaining_text = self._extract_reference_from_string(stripped_line)
         if index != "": # check that, if there is an index, it is the correct Index type
+            if index in self.exclusion_list:
+                if indent == 0:
+                    return indent, index, remaining_text
+                else:
+                    raise ValueError(f"This line has {indent} indent(s) but should have zero because the index is on the exclusion list")
+
             if indent >= len(self.index_patterns):
                 raise ValueError(f"This line has too many indents and cannot be compared against a Valid Index: {line_of_text}")
             expected_pattern = self.index_patterns[indent]

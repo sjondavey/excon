@@ -1,6 +1,6 @@
 import pandas as pd
 import os
-import numpy as np
+import re
 from src.valid_index import ValidIndex
 
 
@@ -32,7 +32,7 @@ def process_regulations(filenames_as_list, valid_index_checker, non_text_labels)
 
     df = pd.DataFrame()
     df = process_lines(all_data_as_lines, valid_index_checker)
-    add_full_reference(df) # adds the reference to the input dataframe
+    add_full_reference(df, valid_index_checker) # adds the reference to the input dataframe
     df['word_count'] = df['Text'].str.split().str.len()
     return df, non_text
 
@@ -224,14 +224,14 @@ def get_regulation_detail(node_str, df, valid_index_tracker):
     return text
 
 
-# def read_processed_regs_into_dataframe(file_list, valid_index_checker, non_text_labels):
-#     df, non_text = process_regulations(file_list, valid_index_checker, non_text_labels)
-#     print("total lines in dataframe: ", len(df))
-#     #TODO: Remove the page numbers from the non-text keys
-#     non_text_keys = non_text.keys()
-#     for key in non_text_keys:
-#         print("total ", key, ": ", len(non_text[key]))
-#     return df, non_text
+def read_processed_regs_into_dataframe(file_list, valid_index_checker, non_text_labels):
+    df, non_text = process_regulations(file_list, valid_index_checker, non_text_labels)
+    print("total lines in dataframe: ", len(df))
+    #TODO: Remove the page numbers from the non-text keys
+    non_text_keys = non_text.keys()
+    for key in non_text_keys:
+        print("total ", key, ": ", len(non_text[key]))
+    return df, non_text
 
 # import tiktoken
 # def num_tokens_from_string(string: str, encoding = tiktoken.encoding_for_model("gpt-3.5-turbo")) -> int:

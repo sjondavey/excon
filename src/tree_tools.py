@@ -1,6 +1,6 @@
 from anytree import Node, RenderTree, find, LevelOrderIter, AsciiStyle
 import re
-from src.file_tools import ValidIndex
+from src.valid_index import ValidIndex
 
 #from file_tools import get_full_text_for_node 
         

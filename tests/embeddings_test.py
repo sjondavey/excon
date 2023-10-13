@@ -1,6 +1,6 @@
 from src.embeddings import get_ada_embedding, \
-                           load_csv_file_with_embeddings, \
                            get_closest_nodes
+import pandas as pd                        
 
 class TestEmbeddings:
     question = "Who can trade gold?"
@@ -9,15 +9,10 @@ class TestEmbeddings:
     # Since this requires a call to the OpenAI API, I will not run it all the time
     # def test_get_ada_embedding(self):
     #     assert get_ada_embedding(self.question) == self.question_embedding
-
-    def test_load_csv_file_with_embeddings(self):
-        securities_definitions_file = "./inputs/definitions_securities_with_embeddings.csv"
-        df_definitions_securities = load_csv_file_with_embeddings(securities_definitions_file, "Embedding")
-        assert isinstance(df_definitions_securities.iloc[0]['Embedding'], list)
-
+    
     def test_get_closest_nodes(self):
-        summary_file = "./inputs/summary_with_embedding.csv"
-        df_summary = load_csv_file_with_embeddings(summary_file, "Embedding")
+        summary_file = "./inputs/summary_with_embedding.parquet"
+        df_summary = pd.read_parquet(summary_file, engine="pyarrow")
         close = get_closest_nodes(df_summary, "Embedding", self.question_embedding, n=2)
         q1 = 'For all requests to export gold in any form, they must be directed to the South African Diamond and Precious Metals Regulator.'
         assert(close.iloc[0]['text'] == q1)
