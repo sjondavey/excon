@@ -1,21 +1,9 @@
 import pytest
-from src.valid_index import ValidIndex
+from src.valid_index import ValidIndex, get_excon_manual_index
 from src.tree_tools import TreeNode, Tree
 
-def create_excon_index_checker():
-    exclusion_list = ['Legal context', 'Introduction']
-    excon_index_patterns = [
-            r'^[A-Z]\.\d{0,2}',
-            r'^\([A-Z]\)',
-            r'^\((i|ii|iii|iv|v|vi|vii|viii|ix|x|xi|xii|xiii|xiv|xv|xvi|xvii|xviii|xix|xx|xxi|xxii|xxiii)\)',
-            r'^\([a-z]\)',
-            r'^\([a-z]{2}\)',
-            r'^\((?:[1-9]|[1-9][0-9])\)',
-        ]
-    return ValidIndex(regex_list_of_indices=excon_index_patterns, exclusion_list=exclusion_list)
-
 class TestTree:
-    index_checker = create_excon_index_checker()
+    index_checker = get_excon_manual_index()
 
     def test_add_to_tree(self):
         tree = Tree("Excon", self.index_checker)

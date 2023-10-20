@@ -1,6 +1,7 @@
 import pandas as pd
 import os
 import re
+import tiktoken
 from src.valid_index import ValidIndex
 
 
@@ -47,45 +48,43 @@ def process_lines(lines, valid_index_checker):
         "Page": [],
         "Heading": []
     }
-    for line in lines:
-        if line.strip() == '':  # Skip blank lines
-            continue
 
     for line_of_text in lines:
-        # Find and remove any special markup characters from the line of text
-        pattern = r'\(([^\(\)]*\.pdf); pg (\d+)\)\s*$'
-        # Use search to find matches
-        document_page = re.search(pattern, line_of_text)
-        if document_page:
-            data['Document'].append(document_page.group(1).strip())
-            data['Page'].append(document_page.group(2).strip())
-            line_of_text = line_of_text[:document_page.start()] + line_of_text[document_page.end():]
-        else:
-            data['Document'].append('')
-            data['Page'].append('')
+        if line_of_text.strip() != '':  # Skip blank lines
+            # Find and remove any special markup characters from the line of text
+            pattern = r'\(([^\(\)]*\.pdf); pg (\d+)\)\s*$'
+            # Use search to find matches
+            document_page = re.search(pattern, line_of_text)
+            if document_page:
+                data['Document'].append(document_page.group(1).strip())
+                data['Page'].append(document_page.group(2).strip())
+                line_of_text = line_of_text[:document_page.start()] + line_of_text[document_page.end():]
+            else:
+                data['Document'].append('')
+                data['Page'].append('')
 
-        pattern = '\(#Heading\)'
-        # Use search to find matches
-        document_page = re.search(pattern, line_of_text)
-        if document_page:
-            data['Heading'].append(True)
-            line_of_text = line_of_text[:document_page.start()] + line_of_text[document_page.end():]
-        else:
-            data['Heading'].append(False)
+            pattern = '\(#Heading\)'
+            # Use search to find matches
+            document_page = re.search(pattern, line_of_text)
+            if document_page:
+                data['Heading'].append(True)
+                line_of_text = line_of_text[:document_page.start()] + line_of_text[document_page.end():]
+            else:
+                data['Heading'].append(False)
 
-        #Now strip out the index part
-        indent, reference, remaining_text = valid_index_checker.parse_line_of_text(line_of_text)
+            #Now strip out the index part
+            indent, reference, remaining_text = valid_index_checker.parse_line_of_text(line_of_text)
 
-        data['Indent'].append(indent)
-        data['Reference'].append(reference.strip())
-        data['Text'].append(remaining_text.strip())
+            data['Indent'].append(indent)
+            data['Reference'].append(reference.strip())
+            data['Text'].append(remaining_text.strip())
 
     df = pd.DataFrame(data)
     return df
 
 
 # TODO: Remove the page reference from the 'block_identifier' because this is messing up the dictionary keys
-def extract_non_text(lines, block_identifier):
+def extract_non_text(lines, block_identifier, hard_stop = 100):
     """
     Very crude function to extract the following blocks from the text:
             - block_identifier = 'Table', 'Formula' or 'Example'
@@ -96,6 +95,7 @@ def extract_non_text(lines, block_identifier):
     line_counter = 0
     remaining_lines = []
 
+    
     for line in lines:
         stripped_line = line.lstrip(' ')
         if stripped_line.startswith(block_identifier):
@@ -108,14 +108,18 @@ def extract_non_text(lines, block_identifier):
             continue
 
         if current_block is not None:
-            if line_counter < 100:
+            if line_counter < hard_stop:
                 #dictionary[current_block].append(stripped_line)
                 dictionary[current_block].append(line)
                 line_counter += 1
             else:
-                raise ValueError(f'Formatting issue with {current_block}: more than 100 lines before "{block_identifier} {line_counter} - end".')
+                raise ValueError(f'Formatting issue with {current_block}: more than {hard_stop} lines before finding closing token: "{block_identifier} - end".')
         else:
             remaining_lines.append(line)
+    
+    if current_block is not None:
+        raise ValueError(f'Formatting issue with {current_block}: reached the end of the input lines before finding closing token: "{block_identifier} - end".')
+
     return remaining_lines, dictionary
 
 
@@ -165,7 +169,9 @@ def add_full_reference(df, valid_index_checker):
             df.loc[i, 'full_reference'] = full_reference
 
 
-
+# Note: This method will not work correctly if empty values in the dataframe are NaN as is the case when loading
+#       a dataframe form a file without the 'na_filter=False' option. You should ensure that the dataframe does 
+#       not have any NaN value for the text fields. Try running df.isna().any().any() as a test before you get here
 def get_regulation_detail(node_str, df, valid_index_tracker):
     text = ''
     terminal_text_df = df[df['full_reference'].str.startswith(node_str)]
@@ -175,10 +181,13 @@ def get_regulation_detail(node_str, df, valid_index_tracker):
         number_of_spaces = (row['Indent'] - terminal_text_indent) * 4
         #set the string "line" to start with the number of spaces
         line = " " * number_of_spaces
-        if (row['Reference'] == ''):
+        if pd.isna(row['Reference']) or row['Reference'] == '':
             line = line + row['Text']
         else:
-            line = line + row['Reference'] + " " + row['Text']
+            if pd.isna(row['Text']):
+                line = line + row['Reference']
+            else:     
+                line = line + row['Reference'] + " " + row['Text']
         if text != "":
             text = text + "\n"
         text = text + line
@@ -224,20 +233,19 @@ def get_regulation_detail(node_str, df, valid_index_tracker):
     return text
 
 
-def read_processed_regs_into_dataframe(file_list, valid_index_checker, non_text_labels):
+def read_processed_regs_into_dataframe(file_list, valid_index_checker, non_text_labels, print_summary = False):
     df, non_text = process_regulations(file_list, valid_index_checker, non_text_labels)
-    print("total lines in dataframe: ", len(df))
     #TODO: Remove the page numbers from the non-text keys
-    non_text_keys = non_text.keys()
-    for key in non_text_keys:
-        print("total ", key, ": ", len(non_text[key]))
+    if print_summary:
+        print("total lines in dataframe: ", len(df))
+        for key in non_text.keys():
+            print("total ", key, ": ", len(non_text[key]))
     return df, non_text
 
-# import tiktoken
-# def num_tokens_from_string(string: str, encoding = tiktoken.encoding_for_model("gpt-3.5-turbo")) -> int:
-#     if pd.isna(string):
-#         return 0
-#     """Returns the number of tokens in a text string."""
-#     num_tokens = len(encoding.encode(string))
-#     return num_tokens
 
+def num_tokens_from_string(string: str, encoding = tiktoken.encoding_for_model("gpt-3.5-turbo")) -> int:
+    if pd.isna(string):
+        return 0
+    """Returns the number of tokens in a text string."""
+    num_tokens = len(encoding.encode(string))
+    return num_tokens

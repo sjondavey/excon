@@ -31,6 +31,38 @@ class ValidIndex():
         # If there's anything left in the reference after all patterns have been attempted, it's invalid.
         #return not reference
 
+    # When dealing with text (and the output from an LLM) we often get something that is supposed to be a 
+    # reference but has other text or characters interspersed. This is an attempt to extract a valid reference
+    # from text that contains a valid reference plus potentially some 'other stuff'. It works by
+    # - Extracting the i-ith index_patterns. 
+    # - appending this to a string called partial_ref 
+    # - removing the matched string plus any other text to the left of it 
+    # - next i
+    # The method returns None if it does not find the i-th pattern and there is still text remaining to search 
+
+    # For example, give the excon reference pattern, this method will provide the following output
+    # print(extract_valid_reference('B.18 Gold (B)(i)(b)'))  # Output: 'B.18(B)(i)(b)'
+    # print(extract_valid_reference('B.18 Gold (B)(a)(b)'))  # Output: None because after (B) we need a roman numeral
+    # print(extract_valid_reference('A.1'))  # Output: 'A.1'
+    def extract_valid_reference(self, input_string):
+        partial_ref = ""
+        remaining_str = input_string
+        
+        for pattern in self.index_patterns:
+            if pattern[0] == "^": # the caret "^" is used in the index pattern because we only want the index at the start of the section but this causes potential issues here so it is removed 
+                pattern = pattern[1:]
+            match = re.search(pattern, remaining_str)
+            if match:
+                partial_ref += match.group()
+                remaining_str = remaining_str[match.end():]
+            else:
+                if remaining_str:
+                    return None
+                break
+        
+        return partial_ref if partial_ref else None
+
+
     def split_reference(self, reference):
         components = []
         #print(f'split_reference called with input: {reference}')
@@ -122,3 +154,14 @@ class ValidIndex():
         return '', s
 
 
+def get_excon_manual_index():
+    exclusion_list = ['Legal context', 'Introduction']
+    excon_index_patterns = [
+        r'^[A-Z]\.\d{0,2}',
+        r'^\([A-Z]\)',
+        r'^\((i|ii|iii|iv|v|vi|vii|viii|ix|x|xi|xii|xiii|xiv|xv|xvi|xvii|xviii|xix|xx|xxi|xxii|xxiii)\)',
+        r'^\([a-z]\)',
+        r'^\([a-z]{2}\)',
+        r'^\((?:[1-9]|[1-9][0-9])\)',
+    ]
+    return ValidIndex(regex_list_of_indices=excon_index_patterns, exclusion_list=exclusion_list)

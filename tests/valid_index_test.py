@@ -1,21 +1,8 @@
 import pytest
-from src.valid_index import ValidIndex
-
-def create_excon_index_checker():
-    exclusion_list = ['Legal context', 'Introduction']
-    excon_index_patterns = [
-            r'^[A-Z]\.\d{0,2}',
-            r'^\([A-Z]\)',
-            r'^\((i|ii|iii|iv|v|vi|vii|viii|ix|x|xi|xii|xiii|xiv|xv|xvi|xvii|xviii|xix|xx|xxi|xxii|xxiii)\)',
-            r'^\([a-z]\)',
-            r'^\([a-z]{2}\)',
-            r'^\((?:[1-9]|[1-9][0-9])\)',
-        ]
-    return ValidIndex(regex_list_of_indices=excon_index_patterns, exclusion_list=exclusion_list)
-
+from src.valid_index import ValidIndex, get_excon_manual_index
 
 class TestValidIndex:
-    index_checker = create_excon_index_checker()
+    index_checker = get_excon_manual_index()
 
     def test_is_valid_reference(self):
         blank_reference = ""
@@ -38,6 +25,11 @@ class TestValidIndex:
         invalid_reference = 'G.1(xviii)'
         assert not self.index_checker.is_valid_reference(invalid_reference)
 
+    def test_extract_valid_reference(self):
+        assert self.index_checker.extract_valid_reference('B.18 Gold (B)(i)(b)') == 'B.18(B)(i)(b)'
+        assert self.index_checker.extract_valid_reference('   B.18 Gold (B)(i)(b)') == 'B.18(B)(i)(b)'
+        assert self.index_checker.extract_valid_reference('B.18 Gold (B)(a)(b)')  is None
+        assert self.index_checker.extract_valid_reference('A.1') == 'A.1'
 
     def test_split_reference(self):
         long_reference = 'G.1(C)(xviii)(c)(dd)(9)'
