@@ -8,7 +8,7 @@ from src.chat_bot import ExconManual
 class TestExconManual:
     excon = ExconManual(log_file='')
     excon_test = ExconManual(log_file='',input_folder = "./inputs_test/")
-    include_calls_to_api = False
+    include_calls_to_api = True
         
 
     def test_construction(self):
@@ -86,6 +86,31 @@ class TestExconManual:
                                        manual_responses_for_testing = manual_responses_for_testing)
         assert self.excon_test.messages[-1]["role"] == "assistant"
         assert self.excon_test.messages[-1]["content"].strip() == self.excon.assistant_msg_no_relevant_data
+        assert self.excon_test.system_state == self.excon_test.system_states[0] # rag
+
+        # test the workflow if the system needs additional content
+        self.excon_test.system_state = self.excon_test.system_states[0] # rag
+        user_context = "Who can trade gold?" # there are hits in the KB for this
+        testing = True # don't make call to openai API, use the canned response below
+        flag = "SECTION:"
+        response = "C.(C)"
+        manual_responses_for_testing = []
+        manual_responses_for_testing.append(flag + response)
+
+        # now the response once it has received the additional data
+        flag = "ANSWER:"
+        response = "The acquisition of gold for legitimate trade purposes, such as by manufacturing jewellers or dentists, is subject to the approval of the South African Diamond and Precious Metals Regulator. After receiving such approval, a permit must be obtained from SARS, which will allow the permit holder to approach Rand Refinery Limited for an allocation of gold. The holders of gold, having received the necessary approvals, are exempt from certain provisions of Regulation 5(1). (Reference: C. Gold (C)(i))"        
+        manual_responses_for_testing.append(flag + response)
+
+        self.excon_test.user_provides_input(user_context, 
+                                       threshold = 0.15, 
+                                       model_to_use="gpt-3.5-turbo", 
+                                       temperature = 0, 
+                                       max_tokens = 200,
+                                       testing = testing,
+                                       manual_responses_for_testing = manual_responses_for_testing)
+        assert self.excon_test.messages[-1]["role"] == "assistant"
+        assert self.excon_test.messages[-1]["content"].strip() == response
         assert self.excon_test.system_state == self.excon_test.system_states[0] # rag
 
         # test what happens if the LLM does not listen to instructions and returns something random

@@ -23,6 +23,11 @@ from src.embeddings import get_ada_embedding, \
 
 class ExconManual():
     def __init__(self, log_file = '', input_folder = "./inputs/"):
+        
+        # Create a custom log level for the really detailed logs
+        self.DEV_LEVEL = 15
+        logging.addLevelName(self.DEV_LEVEL, 'DEV')        
+
         # Set up basic configuration first
         if log_file == '':
             logging.basicConfig(level=logging.INFO)
@@ -97,40 +102,41 @@ class ExconManual():
             self.logger.info("Entering RAG with query: " + user_context)
             df_definitions, df_search_sections = self.similarity_search(user_context, threshold)
             if len(df_definitions) + len(df_search_sections) == 0:
-                self.logger.info("Unable to find any definitions or text related to this query")
+                self.logger.log(self.DEV_LEVEL, "Unable to find any definitions or text related to this query")
                 self.system_state = self.system_states[0] # "rag"
                 self.messages.append({"role": "assistant", "content": self.assistant_msg_no_data})
+                self.logger.info(f"assistant: {self.assistant_msg_no_data}")
                 return
             else:
                 flag, response = self.resource_augmented_query(model_to_use, temperature, max_tokens, df_definitions, df_search_sections,
                                                                testing, manual_responses_for_testing)
                 if flag == self.rag_prefixes[0]: # "ANSWER:"
-                    self.logger.info("-- Question asked and answered")
-                    self.logger.info(f"\nAssistant: {response.strip()}")
+                    self.logger.log(self.DEV_LEVEL, "-- Question asked and answered")
+                    self.logger.log(self.DEV_LEVEL, f"\nAssistant: {response.strip()}")
 
                     self.messages.append({"role": "assistant", "content": response.strip()})
+                    self.logger.info(f"assistant: {response.strip()}")
                     self.system_state = self.system_states[0] # RAG
                     return 
                 elif flag == self.rag_prefixes[1]: # "SECTION:"
-                    self.logger.info("Question asked. Request for more info")
+                    self.logger.log(self.DEV_LEVEL, "Question asked. Request for more info")
+                    modified_section_to_add = self.index_checker.extract_valid_reference(response)
+                    if modified_section_to_add is None:
+                        # TODO: Do you want to ask the user for help?
+                        self.logger.info("Request to add resources failed because the reference was not valid")
+                        self.system_state = self.system_states[3] # Stuck
+                        self.messages.append({"role": "assistant", "content": self.assistant_msg_stuck}) 
+                        return                    
                     df_search_sections = self.add_section_to_resource(modified_section_to_add, df_search_sections)
                     if self.system_state == self.system_states[2]: # "requires_additional_sections"
                         # TODO: Do you want to ask the user for help?
                         self.logger.info("Request to add resources failed")
                         self.system_state = self.system_states[3] # Stuck
                         self.messages.append({"role": "assistant", "content": self.assistant_msg_stuck}) 
-
-                        raise NotImplementedError() # I need to work out out to proceed from here
-                        #TODO: Perhaps separate out the two cases?
-                        message = f"The system has requested an additional section in order to answer your query. \
-                            It requested section {section_to_add} but this is either not a valid index or the index \
-                            does not seem to exist in the data. If you are able to construct a valid index from the \
-                                value {section_to_add} please input it now otherwise please restart the chat."
-                        self.messages.append({"role": "assistant", "content": self.message})                        
                         return
                     # try again with new resources
                     flag, response = self.resource_augmented_query(model_to_use, temperature, max_tokens, df_definitions, df_search_sections,
-                                                                   testing, manual_responses_for_testing)
+                                                                   testing, [manual_responses_for_testing[-1]])
                     if flag == self.rag_prefixes[0]: # "ANSWER:"
                         self.logger.info("Question answered with the additional information")
                         self.messages.append({"role": "assistant", "content": response.strip()})
