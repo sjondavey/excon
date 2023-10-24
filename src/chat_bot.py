@@ -52,7 +52,10 @@ class ExconManual():
                               "stuck"]                        # Terminal state. Once in this state no further progress can be made and user must restart
         self.system_state = self.system_states[0]
 
+        
         self.messages = []
+        self.reset_conversation_history()
+
         self.rag_prefixes = ["ANSWER:",  # LLM was able to answer the question with the input data
                              "SECTION:", # LLM Requested additional information to answer the question
                              "NONE:",    # The input data was not helpful
@@ -66,6 +69,11 @@ class ExconManual():
 
 
 
+    def reset_conversation_history(self):
+        opening_message = "I am a bot designed to answer questions based on the Exchange Control Manual for Authorised Dealers. How can I assist today?"
+        self.messages = [{"role": "assistant", "content": opening_message}]
+        self.system_state = self.system_states[0]
+        
     # Note: To test the workflow I need some way to control the openai API responses. I have chosen to do this with the two parameters
     #       testing: a flag. If false the function will run calling the openai api for responses. If false the function will 
     #                        select the response from the list of responses manual_responses_for_testing
@@ -75,7 +83,12 @@ class ExconManual():
     #  
     def user_provides_input(self, user_context, threshold, model_to_use, temperature, max_tokens,
                             testing = False, manual_responses_for_testing = []):
-        self.messages.append({"role": "user", "content": user_context})
+
+        # I'm not sure I really understand how I should work with the Streamlit front end but I seem to need to add the 
+        # user message in a step before I call "user_provides_input". This can result in the message being duplicated in the
+        # list so here I include a "streamlit ui" check
+        if not (self.messages[-1]["role"] == "user" and self.messages[-1]["content"] == user_context): 
+            self.messages.append({"role": "user", "content": user_context})
 
         if self.system_state == self.system_states[3]: #stuck
             self.messages.append({"role": "assistant", "content": self.assistant_msg_stuck})

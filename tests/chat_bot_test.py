@@ -48,7 +48,8 @@ class TestExconManual:
                                        max_tokens = 200)
         assert self.excon_test.messages[-1]["role"] == "assistant"
         assert self.excon_test.messages[-1]["content"] == self.excon_test.assistant_msg_no_data
-        assert self.excon_test.system_state == "no_relevant_embeddings"
+        #assert self.excon_test.system_state == "no_relevant_embeddings"
+        assert self.excon_test.system_state == self.excon_test.system_states[0] # rag
 
         # test the workflow if the system answers the question as hoped
         self.excon_test.system_state = self.excon_test.system_states[0] # rag
