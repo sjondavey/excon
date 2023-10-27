@@ -430,7 +430,7 @@ class ExconManual():
     def get_regulation_detail(self, node_str):
         valid_reference = self.index_checker.extract_valid_reference(node_str)
         if not valid_reference:
-            return "The input reference did not confirm to this documents standard"
+            return "The reference did not conform to this documents standard"
         else:
             return get_regulation_detail(valid_reference, self.df_excon, self.index_checker)
 
