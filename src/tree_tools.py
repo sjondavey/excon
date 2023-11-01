@@ -1,8 +1,9 @@
 from anytree import Node, RenderTree, find, LevelOrderIter, AsciiStyle
 import re
+import pandas as pd
 from src.valid_index import ValidIndex
 
-#from file_tools import get_full_text_for_node 
+from src.file_tools import get_regulation_detail, num_tokens_from_string
         
 
 class TreeNode(Node):
@@ -85,6 +86,26 @@ class Tree:
         for pre, _, node in RenderTree(self.root, style=AsciiStyle()):
             print(f"{pre}{node.name} [{node.heading_text}]")
 
+    # I use this function when extracting the headings from the manual for indexing. There are no tests for it yet!!
+    # TODO: Add tests for this
+    def _list_node_children(self, node, indent = 0):
+        string = ""
+        # For each node, check if at least one child has a non-empty heading text
+        children_with_text = [child for child in node.children if child.heading_text != '']
+
+        if children_with_text:
+            # If any child has non-empty heading text, print all that node's children with their heading text
+            for child in node.children:
+                if child.parent == self.root:
+                    if child.name in self.valid_index_checker.exclusion_list:
+                        string = string + (' ' * indent + f'{child.name}\n')    
+                    else:
+                        string = string + (' ' * indent + f'{child.name} {child.heading_text}\n')
+                else:
+                    string = string + (' ' * indent + f'{child.name} {child.heading_text}\n')
+                string = string + self._list_node_children(child, indent + 4)
+        return string
+
 
 def build_tree_for_regulation(root_node_name, regs_as_dataframe, valid_index_checker):
     # Create a tree from the full_reference column and check there are no errors
@@ -106,30 +127,42 @@ def build_tree_for_regulation(root_node_name, regs_as_dataframe, valid_index_che
     return tree
 
 
-# def token_count(text: str()):
-#     encoding = tiktoken.encoding_for_model("gpt-3.5-turbo")
-#     # encoding = tiktoken.get_encoding("cl100k_base") # the encoding model for gpt-3.5-turbo
-#     num_tokens = len(encoding.encode(text))
-#     return num_tokens
+def _split_recursive(node, df, token_limit, valid_index_checker, node_list=[]):
+    # Get the full text for this node
+    subsection_text = get_regulation_detail(node.full_node_name, df, valid_index_tracker=valid_index_checker)
+    token_count = num_tokens_from_string(subsection_text)
+
+    # Check if the total token count of the node is greater than the limit
+    if token_count > token_limit:
+        # If the token count is over the limit, recursively apply the function to each child
+        if len(node.children) == 0:
+            raise Exception(f'Node {node.full_node_name} has no children but has a token count of {token_count}')
+        for child in node.children:
+            _split_recursive(child, df, token_limit, valid_index_checker, node_list)
+    else:
+        # If the token count is under the limit, add this node to the list
+        node_list.append(node)
+    return node_list
 
 
-# # TODO:Should this not just be by token length now? I think I need to get rid of "get_full_text_for_node" and use "get_regulation_detail" 
-# # because that the the thing that gets passed to OpenAI
-# def split_tree(node, df, word_limit, valid_index_checker, node_list=[]):
-#     # Get the full text for this node
-#     subsection_text = get_full_text_for_node(node.full_node_name, df, valid_index_checker=valid_index_checker, include_headings = False)
-#     word_count = len(subsection_text.split(' '))
+####
+# Starting at an particular parent node (can be the tree root or any child), this method splits up the branch 
+# into sections where the text does not exceed a certain token_count cap.
+#
+# Initially this is used to set up the base DataFrame using node == root and later it can be used if we want 
+# to change the word_limit for a specific piece of regulation
+###
+def split_tree(node, df, token_limit, valid_index_checker):
+    node_list=[]
+    node_list = _split_recursive(node, df, token_limit, valid_index_checker, node_list)
+    section_token_count = []
+    for node in node_list:
+        #subsection_text = get_full_text_for_node(node.full_node_name, df, False)
+        subsection_text = get_regulation_detail(node.full_node_name, df, valid_index_checker)
+        token_count = num_tokens_from_string(subsection_text)
+        section_token_count.append([node.full_node_name, subsection_text, token_count])
 
-#     # Check if the total word count of the node is greater than the limit
-#     if word_count > word_limit:
-#         # If the word count is over the limit, recursively apply the function to each child
-#         if len(node.children) == 0:
-#             raise Exception(f'Node {node.full_node_name} has no children but has a word count of {word_count}')
-#         for child in node.children:
-#             split_tree(child, df, word_limit, valid_index_checker, node_list)
-#     else:
-#         # If the word count is under the limit, add this node to the list
-#         node_list.append(node)
+    column_names = ['section', 'text', 'token_count']
+    return pd.DataFrame(section_token_count, columns=column_names)
 
-#     return node_list    
 

@@ -1,4 +1,5 @@
 __pycache__/
+tmp/
 
 # Unit test / coverage reports
 .pytest_cache/
@@ -10,4 +11,4 @@ env/
 logs/
 
 # PDFs
-source/
+pdf/

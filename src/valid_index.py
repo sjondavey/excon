@@ -159,9 +159,10 @@ def get_excon_manual_index():
     excon_index_patterns = [
         r'^[A-Z]\.\d{0,2}',
         r'^\([A-Z]\)',
-        r'^\((i|ii|iii|iv|v|vi|vii|viii|ix|x|xi|xii|xiii|xiv|xv|xvi|xvii|xviii|xix|xx|xxi|xxii|xxiii)\)',
+        r'^\((i|ii|iii|iv|v|vi|vii|viii|ix|x|xi|xii|xiii|xiv|xv|xvi|xvii|xviii|xix|xx|xxi|xxii|xxiii|xxiv|xxv|xxvi|xxvii)\)',
         r'^\([a-z]\)',
         r'^\([a-z]{2}\)',
         r'^\((?:[1-9]|[1-9][0-9])\)',
     ]
     return ValidIndex(regex_list_of_indices=excon_index_patterns, exclusion_list=exclusion_list)
+
