@@ -80,9 +80,9 @@ def test_split_tree():
 
     tree = build_tree_for_regulation("split_test", df, excon_index)
 
-    node_list=[]
+    #node_list=[]
     token_limit_per_chunk = 125
-    chunked_df = split_tree(tree.root, df, token_limit_per_chunk, excon_index, node_list)
+    chunked_df = split_tree(tree.root, df, token_limit_per_chunk, excon_index)
     assert len(chunked_df) == 7
     assert chunked_df.iloc[0]['section'] == 'A.3(A)(i)'
     assert chunked_df.iloc[1]['section'] == 'A.3(A)(ii)'

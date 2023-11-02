@@ -6,8 +6,14 @@ importlib.reload(src.chat_bot)
 from src.chat_bot import ExconManual
 
 class TestExconManual:
-    excon = ExconManual(log_file='')
-    excon_test = ExconManual(log_file='',input_folder = "./inputs_test/")
+    path_to_manual_as_csv_file_excon = "./inputs/ad_manual.csv"
+    path_to_definitions_as_parquet_file_excon = "./inputs/ad_definitions.parquet"
+    path_to_index_as_parquet_file_excon = "./inputs/ad_index.parquet"
+    excon = ExconManual(path_to_manual_as_csv_file_excon, path_to_definitions_as_parquet_file_excon, path_to_index_as_parquet_file_excon, log_file='')
+    path_to_manual_as_csv_file_excon_test = "./inputs_test/manual.csv"
+    path_to_definitions_as_parquet_file_excon_test = "./inputs_test/definitions.parquet"
+    path_to_index_as_parquet_file_excon_test = "./inputs_test/index.parquet"
+    excon_test = ExconManual(path_to_manual_as_csv_file_excon_test, path_to_definitions_as_parquet_file_excon_test, path_to_index_as_parquet_file_excon_test, log_file='')
     include_calls_to_api = True
         
 

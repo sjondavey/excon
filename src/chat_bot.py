@@ -22,7 +22,14 @@ from src.embeddings import get_ada_embedding, \
                            get_closest_nodes
 
 class ExconManual():
-    def __init__(self, log_file = '', input_folder = "./inputs/", logging_level = 20): # 20 = logging.info
+    #def __init__(self, log_file = '', input_folder = "./inputs/", logging_level = 20): # 20 = logging.info
+    def __init__(self, 
+                 path_to_manual_as_csv_file,
+                 path_to_definitions_as_parquet_file,
+                 path_to_index_as_parquet_file,
+                 chat_for_ad = True, # False == chat with ADLA
+                 log_file = '', 
+                 logging_level = 20): # 20 = logging.info This will exclude my DEV_LEVEL labeled logs
 
         # Create a custom log level for the really detailed logs
         self.DEV_LEVEL = 15
@@ -39,17 +46,32 @@ class ExconManual():
         self.logger.setLevel(logging_level)
 
         self.index_checker = get_excon_manual_index()
-        self.df_excon = pd.read_csv(input_folder + "excon_processed_manual.csv", sep="|", encoding="utf-8", na_filter=False)  
-        if self.df_excon.isna().any().any():
-            raise ValueError(f'Encountered NaN values while loading {input_folder}excon_processed_manual.csv. This will cause ugly issues with the get_regulation_detail method')
-
+        if os.path.exists(path_to_manual_as_csv_file):
+            self.df_excon = pd.read_csv(path_to_manual_as_csv_file, sep="|", encoding="utf-8", na_filter=False)  
+            if self.df_excon.isna().any().any():
+                msg = f'Encountered NaN values while loading {path_to_manual_as_csv_file}. This will cause ugly issues with the get_regulation_detail method'
+                logging.error(msg)
+                raise ValueError(msg)
+        else:
+            msg = f"Could not find the file {path_to_manual_as_csv_file}"
+            logging.error(msg)
+            raise FileNotFoundError(msg)
+        
         # Load the definitions. 
-        definitions_and_embeddings_file = input_folder + "definitions.parquet"
-        self.df_definitions_all = pd.read_parquet(definitions_and_embeddings_file, engine='pyarrow')
+        if os.path.exists(path_to_definitions_as_parquet_file):
+            self.df_definitions_all = pd.read_parquet(path_to_definitions_as_parquet_file, engine='pyarrow')
+        else:
+            msg = f"Could not find the file {path_to_definitions_as_parquet_file}"
+            logging.error(msg)
+            raise FileNotFoundError(msg)
         
         # Load the section headings. 
-        text_and_embeddings_file = input_folder + "text.parquet"
-        self.df_text_all = pd.read_parquet(text_and_embeddings_file, engine='pyarrow')
+        if os.path.exists(path_to_index_as_parquet_file):
+            self.df_text_all = pd.read_parquet(path_to_index_as_parquet_file, engine='pyarrow')
+        else:
+            msg = f"Could not find the file {path_to_index_as_parquet_file}"
+            logging.error(msg)
+            raise FileNotFoundError(msg)
 
         self.system_states = ["rag",                          # System is going to try RAG         
                               "no_relevant_embeddings",       # found embeddings but LLM doesn't think they help answer the question

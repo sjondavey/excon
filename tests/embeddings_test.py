@@ -11,7 +11,7 @@ class TestEmbeddings:
     #     assert get_ada_embedding(self.question) == self.question_embedding
     
     def test_get_closest_nodes(self):
-        summary_file = "./inputs/text.parquet"
+        summary_file = "./inputs/ad_index.parquet"
         df_summary = pd.read_parquet(summary_file, engine="pyarrow")
         close = get_closest_nodes(df_summary, "Embedding", self.question_embedding, threshold = 0.15)
         #q1 = 'For all requests to export gold in any form, they must be directed to the South African Diamond and Precious Metals Regulator.'
