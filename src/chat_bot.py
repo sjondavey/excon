@@ -45,6 +45,12 @@ class ExconManual():
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging_level)
 
+        if chat_for_ad:
+            self.user_type = "Authorised Dealer (AD)" 
+        else:
+            self.user_type = "Authorised Dealer with Limited Authority (ADLA)"
+        self.manual_name = f"Exchange Control Manual for an {self.user_type}"
+
         self.index_checker = get_excon_manual_index()
         if os.path.exists(path_to_manual_as_csv_file):
             self.df_excon = pd.read_csv(path_to_manual_as_csv_file, sep="|", encoding="utf-8", na_filter=False)  
@@ -97,7 +103,7 @@ class ExconManual():
 
 
     def reset_conversation_history(self):
-        opening_message = "I am a bot designed to answer questions based on the Exchange Control Manual for Authorised Dealers. How can I assist today?"
+        opening_message = f"I am a bot designed to answer questions based on the {self.manual_name}. How can I assist today?"
         self.messages = [{"role": "assistant", "content": opening_message}]
         self.system_state = self.system_states[0]
         
@@ -276,7 +282,7 @@ class ExconManual():
         
 
         if len(df_definitions) + len(df_search_sections) > 0: # should always be the case as we check this in the control loop
-            system_context = f"You are attempting to answer questions from an Authorised Dealer based only on the relevant documentation provided. You have only three options:\n\
+            system_context = f"You are attempting to answer questions from an {self.user_type} based only on the relevant documentation provided. You have only three options:\n\
 1) Answer the question. If you do this, your must preface to response with the word '{self.rag_prefixes[0]}'. If possible also provide a reference to the relevant documentation for the user to cross-check. Use this if you are sure about your answer.\n\
 2) Request additional documentation. If, in the body of the relevant documentation, is a reference to another section of the document that is directly relevant, respond with the word '{self.rag_prefixes[1]}' followed by the section reference which looks like A.1(A)(i)(aa). \n\
 3) State '{self.rag_prefixes[2]}' (and nothing else) in all cases where you are not confident about either of the first two options"
