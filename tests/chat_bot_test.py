@@ -432,8 +432,8 @@ class TestExconManual:
         text = "I.2 Local facilities to non-residents\n\
                     (cc) The overall finance period, including any initial credit granted by the exporter, may not exceed six months from date of shipment of the underlying goods from South Africa unless the dispensation outlined in section B.18(B)(i)(b) of the Authorised Dealer Manual has been granted, when the overall finance period, including any initial credit granted by the exporter, may not exceed 12 months from date of shipment of the underlying goods from South Africa. An export finance facility may be extended in the event of the overseas importer requiring an extension of the original credit period, provided that the overall finance periods set out above are not exceeded."
         manual_data = []
-        manual_data.append(["I.2(A)(i)(a)(cc)", 1, text, 100])
-        df_manual_data = pd.DataFrame(manual_data, columns = ["reference", "count", "raw_text", "token_count"])
+        manual_data.append(["I.2(A)(i)(a)(cc)", 0.15,  1, text, 100])
+        df_manual_data = pd.DataFrame(manual_data, columns = ["reference", "cosine_distance", "count", "raw_text", "token_count"])
         referring_sections = self.excon._find_reference_that_calls_for("B.18(B)(i)(b)", df_manual_data)
         assert len(referring_sections) == 1
         assert referring_sections[0] == "I.2(A)(i)(a)(cc)"
@@ -441,8 +441,8 @@ class TestExconManual:
         # Add a second reference to the RAG data
         text_2 = "I.2 Local facilities to non-residents\n\
                     (dd) Random Text with no reference"
-        manual_data.append(["I.2(A)(i)(a)(dd)", 1, text_2, 100])
-        df_manual_data = pd.DataFrame(manual_data, columns = ["reference", "count", "raw_text", "token_count"])
+        manual_data.append(["I.2(A)(i)(a)(dd)", 0.14, 1, text_2, 100])
+        df_manual_data = pd.DataFrame(manual_data, columns = ["reference", "cosine_distance", "count", "raw_text", "token_count"])
         referring_sections = self.excon._find_reference_that_calls_for("B.18(B)(i)(b)", df_manual_data)
         assert len(referring_sections) == 1
         assert referring_sections[0] == "I.2(A)(i)(a)(cc)"
@@ -450,8 +450,8 @@ class TestExconManual:
         # Add a third reference to the RAG data
         text_3 = "I.2 Local facilities to non-residents\n\
                     (ee) Random Text with another reference to B.18(B) (i) (b) but with some random spaces"
-        manual_data.append(["I.2(A)(i)(a)(ee)", 1, text_3, 100])
-        df_manual_data = pd.DataFrame(manual_data, columns = ["reference", "count", "raw_text", "token_count"])
+        manual_data.append(["I.2(A)(i)(a)(ee)", 0.15, 1, text_3, 100])
+        df_manual_data = pd.DataFrame(manual_data, columns = ["reference", "cosine_distance", "count", "raw_text", "token_count"])
         referring_sections = self.excon._find_reference_that_calls_for("B.18(B)(i)(b)", df_manual_data)
         assert len(referring_sections) == 2
         assert referring_sections[0] == "I.2(A)(i)(a)(cc)"
@@ -464,8 +464,8 @@ class TestExconManual:
                     (A) Introduction\n\
                         (i) Fake reference to B.4(B)(iv)(f)"
         manual_data = []
-        manual_data.append(["A.3(A)(i)", 1, text, 100])
-        df_manual_data = pd.DataFrame(manual_data, columns = ["reference", "count", "raw_text", "token_count"])
+        manual_data.append(["A.3(A)(i)", 0.15, 1, text, 100])
+        df_manual_data = pd.DataFrame(manual_data, columns = ["reference", "cosine_distance", "count", "raw_text", "token_count"])
         df_updated = self.excon_test.add_section_to_resource('B.4(B)(iv)(f)', df_manual_data)
         assert len(df_updated) == 2
         assert df_updated.iloc[0]['reference'] == "A.3(A)(i)"
@@ -475,8 +475,8 @@ class TestExconManual:
         text_2 = "A.3 Duties and responsibilities of Authorised Dealers\n\
                     (A) Introduction\n\
                         (ii) No references to be found here"
-        manual_data.append(["A.3(A)(ii)", 1, text_2, 100])
-        df_manual_data = pd.DataFrame(manual_data, columns = ["reference", "count", "raw_text", "token_count"])
+        manual_data.append(["A.3(A)(ii)", 0.14, 1, text_2, 100])
+        df_manual_data = pd.DataFrame(manual_data, columns = ["reference", "cosine_distance", "count", "raw_text", "token_count"])
         df_updated = self.excon_test.add_section_to_resource('B.4(B)(iv)(f)', df_manual_data)
         assert len(df_updated) == 2
         assert df_updated.iloc[0]['reference'] == "A.3(A)(i)"
@@ -485,8 +485,8 @@ class TestExconManual:
         # Add a third reference to the RAG data
         text_3 = "A.3 Local facilities to non-residents\n\
                     (B) Random Text with another reference to B.4(B) (iv) (f) but with some random spaces"
-        manual_data.append(["A.3(B)", 1, text_3, 100])
-        df_manual_data = pd.DataFrame(manual_data, columns = ["reference", "count", "raw_text", "token_count"])
+        manual_data.append(["A.3(B)", 0.13, 1, text_3, 100])
+        df_manual_data = pd.DataFrame(manual_data, columns = ["reference", "cosine_distance", "count", "raw_text", "token_count"])
         df_updated = self.excon_test.add_section_to_resource('B.4(B)(iv)(f)', df_manual_data)
         assert len(df_updated) == 3
         assert df_updated.iloc[0]['reference'] == "A.3(A)(i)"

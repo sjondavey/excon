@@ -15,7 +15,7 @@ class TestEmbeddings:
         df_summary = pd.read_parquet(summary_file, engine="pyarrow")
         close = get_closest_nodes(df_summary, "Embedding", self.question_embedding, threshold = 0.15)
         #q1 = 'For all requests to export gold in any form, they must be directed to the South African Diamond and Precious Metals Regulator.'
-        assert close.iloc[0]['section'] == 'Introduction'
+        assert close.iloc[0]['section'] == 'C.(C)'
         #q2 = 'Acquiring gold for trade purposes requires approval from the South African Diamond and Precious Metals Regulator. Once approved, a permit must be obtained from SARS, which allows the holder to access gold allocation from Rand Refinery Limited.'
-        assert close.iloc[1]['section'] == 'Introduction'
+        assert close.iloc[1]['section'] == 'C.(B)'
 

@@ -55,7 +55,6 @@ if 'manual_to_use' not in st.session_state:
     st.session_state['manual_to_use'] = buttons[0]
 
 if 'excon' not in st.session_state:
-    print("Here")
     st.session_state['excon'] = load_data(ad = True)
 
 
@@ -98,10 +97,11 @@ if authentication_status:
                 st.success('Proceed to entering your prompt message!', icon='👉')
             st.divider()
         else: 
+            openai.api_key = st.secrets['openai']['OPENAI_API_KEY'] #
             openai_api = st.secrets['openai']['OPENAI_API_KEY']
 
         #st.subheader('Models and parameters')
-        selected_model = st.sidebar.selectbox('Choose a model', ['gpt-3.5-turbo', 'gpt-4'], key='selected_model')
+        selected_model = st.sidebar.selectbox('Choose a model', ['gpt-3.5-turbo', 'gpt-4-1106-preview', 'gpt-4'], key='selected_model')
         temperature = st.sidebar.slider('temperature', min_value=0.00, max_value=2.0, value=0.0, step=0.01)
         max_length = st.sidebar.slider('max_length', min_value=32, max_value=2048, value=512, step=8)
         st.divider()
@@ -134,11 +134,13 @@ if authentication_status:
     if st.session_state.messages[-1]["role"] != "assistant":
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
+                #print(f'##### {prompt}')
                 st.session_state['excon'].user_provides_input(user_context = prompt, 
                                 threshold = 0.15, 
                                 model_to_use = selected_model, 
                                 temperature = temperature, 
                                 max_tokens = max_length)
+                #print(f'#### Done with API Call')
                 response = st.session_state['excon'].messages[-1]['content']
                 #print(f'##Response: {response}')
                 placeholder = st.empty()
