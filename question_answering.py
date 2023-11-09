@@ -30,7 +30,7 @@ buttons = ['Authorised Dealer (AD)', 'AD with Limited Authority (ADLA)']
 
 @st.cache_data(show_spinner=False)
 def load_data(ad = True):
-    print(f"load data called for {ad}")
+    # print(f"load data called for {ad}")
     with st.spinner(text="Loading the excon documents and index – hang tight! This should take 30 seconds."):
         if ad:
             path_to_manual_as_csv_file = "./inputs/ad_manual.csv"

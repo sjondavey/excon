@@ -321,7 +321,7 @@ Note: In the manual sections are numbered like A.1(A) or C.(C)(iii)(c)(cc)(3). T
 
 
             # Create a temporary message list. We will only add the messages to the chat history if we get well formatted answers
-            self.messages = [{"role": "system", "content": system_context}] + self.messages 
+            with_system_message = [{"role": "system", "content": system_context}] + self.messages 
 
             total_tokens = num_tokens_from_string(system_context) + num_tokens_from_string(self.messages[-1]['content']) # just check the system and last user message length
             if (model_to_use == "gpt-3.5-turbo" or model_to_use == "gpt-4") and total_tokens > 4000 and model_to_use!="gpt-3.5-turbo-16k":
@@ -336,7 +336,7 @@ Note: In the manual sections are numbered like A.1(A) or C.(C)(iii)(c)(cc)(3). T
                                     model=model_to_use,
                                     temperature = temperature,
                                     max_tokens = max_tokens,
-                                    messages = self.messages
+                                    messages = with_system_message
                                 )
                 #print(response)
                 initial_response = response['choices'][0]['message']['content']
@@ -344,6 +344,7 @@ Note: In the manual sections are numbered like A.1(A) or C.(C)(iii)(c)(cc)(3). T
             # Check the model performed as instructed prefacing its response with one of three words 
             for prefix in self.rag_prefixes:
                 if initial_response.startswith(prefix):
+                    self.messages[-1]["content"] = self.user_question
                     # Split the string into two parts: the prefix and the remaining text
                     return prefix, initial_response[len(prefix):]
 
@@ -352,7 +353,7 @@ Note: In the manual sections are numbered like A.1(A) or C.(C)(iii)(c)(cc)(3). T
             self.logger.warning(f"The response was:\n{initial_response}")
 
             despondent_user_context = f"Please check your answer and make sure you preface your response using only one of the three permissible words, {self.rag_prefixes[0]}, {self.rag_prefixes[1]} or {self.rag_prefixes[2]}"
-            despondent_user_messages = self.messages + [
+            despondent_user_messages = with_system_message + [
                                         {"role": "assistant", "content": initial_response},
                                         {"role": "user", "content": despondent_user_context}]
                                         
@@ -369,6 +370,7 @@ Note: In the manual sections are numbered like A.1(A) or C.(C)(iii)(c)(cc)(3). T
                 followup_response_text = followup_response['choices'][0]['message']['content']
             for prefix in self.rag_prefixes:
                 if followup_response_text.startswith(prefix):
+                    self.messages[-1]["content"] = self.user_question
                     # Split the string into two parts: the prefix and the remaining text
                     return prefix, followup_response_text[len(prefix):]
 
