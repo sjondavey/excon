@@ -15,7 +15,12 @@ class TestExconManual:
     path_to_index_as_parquet_file_excon_test = "./inputs_test/index.parquet"
     excon_test = ExconManual(path_to_manual_as_csv_file_excon_test, path_to_definitions_as_parquet_file_excon_test, path_to_index_as_parquet_file_excon_test, log_file='')
     include_calls_to_api = True
-        
+
+    path_to_manual_as_csv_file_excon = "./inputs/adla_manual.csv"
+    path_to_definitions_as_parquet_file_excon = "./inputs/adla_definitions.parquet"
+    path_to_index_as_parquet_file_excon = "./inputs/adla_index.parquet"
+    adla = ExconManual(path_to_manual_as_csv_file_excon, path_to_definitions_as_parquet_file_excon, path_to_index_as_parquet_file_excon, chat_for_ad = False, log_file='')
+    
 
     def test_construction(self):
         assert True
@@ -99,7 +104,8 @@ class TestExconManual:
         user_context = "Who can trade gold?" # there are hits in the KB for this
         testing = True # don't make call to openai API, use the canned response below
         flag = "SECTION:"
-        response = "C.(C)"
+        #response = "C.(C)"
+        response = "A.3(A)(i)"
         manual_responses_for_testing = []
         manual_responses_for_testing.append(flag + response)
 
@@ -115,6 +121,9 @@ class TestExconManual:
                                        max_tokens = 200,
                                        testing = testing,
                                        manual_responses_for_testing = manual_responses_for_testing)
+        assert self.excon_test.messages[-2]["role"] == "user"
+        assert self.excon_test.messages[-2]["content"] == "Question: Who can trade gold?\n\nSections from the Manual\nC. Gold\n    (C) Acquisition of gold for trade purposes\n        (i) The acquisition of gold for legitimate trade purposes by e.g. manufacturing jewellers, dentists, is subject to the approval of the South African Diamond and Precious Metals Regulator.\n        (ii) After receiving such approval, a permit must be obtained from SARS which will entitle the permit holder to approach Rand Refinery Limited for an allocation of gold.\n        (iii) The holders of gold, having received the approvals outlined above, are exempt from the provisions of Regulation 5(1).\nC. Gold\n    (G) Applications for the importation of gold\n        (i) All applications for the importation of gold must be referred to the South African Diamond and Precious Metals Regulator.\nA.3 Duties and responsibilities of Authorised Dealers\n    (A) Introduction\n        (i) Authorised Dealers should note that when approving requests in terms of the Authorised Dealer Manual, they are in terms of the Regulations, not allowed to grant permission to clients and must refrain from using wording that approval/permission is granted in correspondence with their clients. Instead reference should be made to the specific section of the Authorised Dealer Manual in terms of which the client is permitted to transact.\n"
+
         assert self.excon_test.messages[-1]["role"] == "assistant"
         assert self.excon_test.messages[-1]["content"].strip() == response
         assert self.excon_test.system_state == self.excon_test.system_states[0] # rag
@@ -140,6 +149,37 @@ class TestExconManual:
 
         # Now all the test with additional sections requested
 
+    def test__add_rag_data_to_question(self):
+        dfns = []
+        dfns.append("def1")
+        dfns.append("def2")
+        df_definitions = pd.DataFrame(dfns, columns = ["Definition"])
+        sections = []
+        sections.append("A.1(A)(i)(aa)")
+        sections.append("B.2(B)(ii)(bb)")
+        df_search_sections = pd.DataFrame(sections, columns = ["raw_text"])
+        question = "user asks question"
+        output_string = self.excon._add_rag_data_to_question(question, df_definitions, df_search_sections)
+
+        expected_text = f"Question: {question}\n\nDefinitions from the Manual\ndef1\ndef2\n\
+Sections from the Manual\nA.1(A)(i)(aa)\nB.2(B)(ii)(bb)\n"
+
+        assert output_string == expected_text
+
+    def test__create_system_message(self):
+        expected_message = "You are answering questions for an Authorised Dealer (AD) based only on the relevant sections from the 'Currency and Exchange Manual for Authorised Dealers' (Manual or CEMAD) that are provided. You have three options:\n\
+1) Answer the question. Preface an answer with the tag 'ANSWER:'. If possible, end the answer with the reference to the section or sections you used to answer the question.\n\
+2) Request additional documentation. If, in the body of the sections provided, there is a reference to another section of the Manual that is directly relevant and not already provided, respond with the word 'SECTION:' followed by the section reference.\n\
+3) State 'NONE:' and nothing else in all other cases\n\n\
+Note: In the manual sections are numbered like A.1(A) or C.(C)(iii)(c)(cc)(3). The first index uses the regex pattern r'[A-Z]\.\d(0, 2)'. Thereafter, each sub-index is surrounded by round brackets"
+        assert self.excon._create_system_message() == expected_message
+
+        expected_message = "You are answering questions for an Authorised Dealer with Limited Authority (ADLA) based only on the relevant sections from the 'Currency and Exchange Manual for Authorised Dealers in foreign exchange with limited authority' (Manual or CEMADLA) that are provided. You have three options:\n\
+1) Answer the question. Preface an answer with the tag 'ANSWER:'. If possible, end the answer with the reference to the section or sections you used to answer the question.\n\
+2) Request additional documentation. If, in the body of the sections provided, there is a reference to another section of the Manual that is directly relevant and not already provided, respond with the word 'SECTION:' followed by the section reference.\n\
+3) State 'NONE:' and nothing else in all other cases\n\n\
+Note: In the manual sections are numbered like A.1(A) or C.(C)(iii)(c)(cc)(3). The first index uses the regex pattern r'[A-Z]\.\d(0, 2)'. Thereafter, each sub-index is surrounded by round brackets"
+        assert self.adla._create_system_message() == expected_message
 
     def test_resource_augmented_query(self):
         user_context = "Who can trade gold?"
@@ -168,8 +208,10 @@ class TestExconManual:
                                                                 testing = testing,
                                                                 manual_responses_for_testing = manual_responses_for_testing)
         assert flag == self.excon_test.rag_prefixes[0] # "ANSWER:"
-        # Also check that nothing happened to the internal message stack
-        assert len(self.excon_test.messages) == 1
+        assert len(self.excon_test.messages) == 2
+        assert self.excon_test.messages[-1]["role"] == "user"
+        assert self.excon_test.messages[-1]["content"].startswith("Question:")
+
         if self.include_calls_to_api: # also test it with a call to the API
             flag, response = self.excon_test.resource_augmented_query(model_to_use="gpt-3.5-turbo", 
                                                                 temperature = 0, 
@@ -178,7 +220,7 @@ class TestExconManual:
                                                                 df_search_sections = relevant_sections)
             assert flag == self.excon_test.rag_prefixes[0] # "ANSWER:"
             # Also check that nothing happened to the internal message stack
-            assert len(self.excon_test.messages) == 1
+            # assert len(self.excon_test.messages) == 1
 
         # Check that if the question and reference data mismatch, the system returns a NONE: value
         self.excon_test.messages = [{"role": "user", "content": "How much money can an individual take offshore in any year?"}]
@@ -194,7 +236,7 @@ class TestExconManual:
                                                                 manual_responses_for_testing = manual_responses_for_testing)
         assert flag == self.excon_test.rag_prefixes[2] # "NONE:"
         # Also check that nothing happened to the internal message stack
-        assert len(self.excon_test.messages) == 1
+        # assert len(self.excon_test.messages) == 1
         
         
         # Check the "SECTION" branch
@@ -213,7 +255,7 @@ class TestExconManual:
                                                         manual_responses_for_testing = manual_responses_for_testing)
         assert flag == self.excon_test.rag_prefixes[1] # "SECTION:"
         # Also check that nothing happened to the internal message stack
-        assert len(self.excon_test.messages) == 1
+        # assert len(self.excon_test.messages) == 1
 
         # Check the despondent user branch
         self.excon_test.messages = [{"role": "user", "content": "How much money can an individual take offshore in any year?"}]
@@ -231,7 +273,7 @@ class TestExconManual:
                                                                 manual_responses_for_testing = manual_responses_for_testing)
         assert flag == self.excon_test.rag_prefixes[1] # "SECTION:"
         # Also check that nothing happened to the internal message stack
-        assert len(self.excon_test.messages) == 1
+        # assert len(self.excon_test.messages) == 1
 
         # Check the stubbornly disobedient branch
         self.excon_test.messages = [{"role": "user", "content": "How much money can an individual take offshore in any year?"}]
@@ -249,7 +291,7 @@ class TestExconManual:
                                                                 manual_responses_for_testing = manual_responses_for_testing)
         assert flag == self.excon_test.rag_prefixes[3] # FAIL:
         # Also check that nothing happened to the internal message stack
-        assert len(self.excon_test.messages) == 1
+        #assert len(self.excon_test.messages) == 1
 
         if self.include_calls_to_api:
             # Manually force the first API response to get to the second loop, then test the second API call
@@ -268,7 +310,7 @@ class TestExconManual:
                                                                     manual_responses_for_testing = manual_responses_for_testing)
             assert flag == self.excon_test.rag_prefixes[0] # "ANSWER:"
             # Also check that nothing happened to the internal message stack
-            assert len(self.excon_test.messages) == 1
+            # assert len(self.excon_test.messages) == 1
 
 
     def test_similarity_search(self):

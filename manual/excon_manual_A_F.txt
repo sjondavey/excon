@@ -1927,7 +1927,8 @@ E. Non-resident Rand account, Customer Foreign Currency accounts, foreign curren
                 (dd) charges for repairs and adjustments to goods exported temporarily; 
                 (ee) charges in connection with legal disputes; 
                 (ff) examination fees where the account holder is responsible for the payment thereof; 
-                (gg) fees in respect of services rendered;(hh) fees in respect of the registration of drugs; 
+                (gg) fees in respect of services rendered;
+                (hh) fees in respect of the registration of drugs; 
                 (ii) royalties and fees arising from the use of patent, designs and trademarks; 
                 (jj) subscriptions; and 
                 (kk) technical service payments. 
