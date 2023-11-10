@@ -6,7 +6,6 @@ import fnmatch
 from src.valid_index import ValidIndex, get_excon_manual_index
 from src.file_tools import  add_full_reference, \
                             read_processed_regs_into_dataframe, \
-                            num_tokens_from_string, \
                             extract_non_text, \
                             process_lines, \
                             get_regulation_detail
@@ -158,5 +157,3 @@ def test_read_processed_regs_into_dataframe():
     assert len(non_text['Table']) == 1
     assert len(non_text['Definition']) == 2
 
-def test_num_tokens_from_string():
-    assert True

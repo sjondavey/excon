@@ -3,7 +3,8 @@ import re
 import pandas as pd
 from src.valid_index import ValidIndex
 
-from src.file_tools import get_regulation_detail, num_tokens_from_string
+from src.file_tools import get_regulation_detail
+from src.embeddings import num_tokens_from_string
         
 
 class TreeNode(Node):

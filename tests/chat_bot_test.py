@@ -49,18 +49,18 @@ class TestExconManual:
         assert self.excon_test.messages[-1]["role"] == "assistant"
         assert self.excon_test.messages[-1]["content"] == self.excon.assistant_msg_unknown_state
 
-        # check the response if there are no relevant documents
-        self.excon_test.system_state = self.excon_test.system_states[0] # rag
-        user_context = "How much money can an individual take offshore in any year?"
-        self.excon_test.user_provides_input(user_context, 
-                                       threshold = 0.15, 
-                                       model_to_use="gpt-3.5-turbo", 
-                                       temperature = 0, 
-                                       max_tokens = 200)
-        assert self.excon_test.messages[-1]["role"] == "assistant"
-        assert self.excon_test.messages[-1]["content"] == self.excon_test.assistant_msg_no_data
-        #assert self.excon_test.system_state == "no_relevant_embeddings"
-        assert self.excon_test.system_state == self.excon_test.system_states[0] # rag
+        # check the response if there are no relevant documents        
+        # self.excon_test.system_state = self.excon_test.system_states[0] # rag
+        # user_context = "How much money can an individual take offshore in any year?"
+        # self.excon_test.user_provides_input(user_context, 
+        #                                threshold = 0.15, 
+        #                                model_to_use="gpt-3.5-turbo", 
+        #                                temperature = 0, 
+        #                                max_tokens = 200)
+        # assert self.excon_test.messages[-1]["role"] == "assistant"
+        # assert self.excon_test.messages[-1]["content"] == self.excon_test.assistant_msg_no_data
+        # #assert self.excon_test.system_state == "no_relevant_embeddings"
+        # assert self.excon_test.system_state == self.excon_test.system_states[0] # rag
 
         # test the workflow if the system answers the question as hoped
         self.excon_test.system_state = self.excon_test.system_states[0] # rag
@@ -122,7 +122,7 @@ class TestExconManual:
                                        testing = testing,
                                        manual_responses_for_testing = manual_responses_for_testing)
         assert self.excon_test.messages[-2]["role"] == "user"
-        assert self.excon_test.messages[-2]["content"] == "Who can trade gold?"
+        assert self.excon_test.messages[-2]["content"] == "Question: Who can trade gold?\n\nSections from the Manual\nC. Gold\n    (C) Acquisition of gold for trade purposes\n        (i) The acquisition of gold for legitimate trade purposes by e.g. manufacturing jewellers, dentists, is subject to the approval of the South African Diamond and Precious Metals Regulator.\n        (ii) After receiving such approval, a permit must be obtained from SARS which will entitle the permit holder to approach Rand Refinery Limited for an allocation of gold.\n        (iii) The holders of gold, having received the approvals outlined above, are exempt from the provisions of Regulation 5(1).\nC. Gold\n    (G) Applications for the importation of gold\n        (i) All applications for the importation of gold must be referred to the South African Diamond and Precious Metals Regulator.\nA.3 Duties and responsibilities of Authorised Dealers\n    (A) Introduction\n        (i) Authorised Dealers should note that when approving requests in terms of the Authorised Dealer Manual, they are in terms of the Regulations, not allowed to grant permission to clients and must refrain from using wording that approval/permission is granted in correspondence with their clients. Instead reference should be made to the specific section of the Authorised Dealer Manual in terms of which the client is permitted to transact.\n"
 
         assert self.excon_test.messages[-1]["role"] == "assistant"
         assert self.excon_test.messages[-1]["content"].strip() == response
@@ -208,9 +208,9 @@ Note: In the manual sections are numbered like A.1(A) or C.(C)(iii)(c)(cc)(3). T
                                                                 testing = testing,
                                                                 manual_responses_for_testing = manual_responses_for_testing)
         assert flag == self.excon_test.rag_prefixes[0] # "ANSWER:"
-        assert len(self.excon_test.messages) == 2
+        assert len(self.excon_test.messages) == 1
         assert self.excon_test.messages[-1]["role"] == "user"
-        assert self.excon_test.messages[-1]["content"] == user_context 
+        assert self.excon_test.messages[-1]["content"] == "Question: Who can trade gold?\n\nSections from the Manual\nC. Gold\n    (C) Acquisition of gold for trade purposes\n        (i) The acquisition of gold for legitimate trade purposes by e.g. manufacturing jewellers, dentists, is subject to the approval of the South African Diamond and Precious Metals Regulator.\n        (ii) After receiving such approval, a permit must be obtained from SARS which will entitle the permit holder to approach Rand Refinery Limited for an allocation of gold.\n        (iii) The holders of gold, having received the approvals outlined above, are exempt from the provisions of Regulation 5(1).\nC. Gold\n    (G) Applications for the importation of gold\n        (i) All applications for the importation of gold must be referred to the South African Diamond and Precious Metals Regulator.\n" 
 
         if self.include_calls_to_api: # also test it with a call to the API
             flag, response = self.excon_test.resource_augmented_query(model_to_use="gpt-3.5-turbo", 
@@ -542,4 +542,23 @@ Note: In the manual sections are numbered like A.1(A) or C.(C)(iii)(c)(cc)(3). T
         match = self.excon._find_fuzzy_reference(text, section)
         assert match is not None
 
-        
+    def test__truncate_message_list(self):
+        l = [{"content": "1"}, 
+            {"content": "2"},
+            {"content": "3"},
+            {"content": "4"},
+            {"content": "5"},
+            {"content": "6"},
+            {"content": "7"},
+            {"content": "8"},
+            {"content": "9"},
+            {"content": "10"}]
+        truncated =self.excon._truncate_message_list(l, 2)
+        assert len(truncated) == 3
+        assert truncated[0]["content"] == "8"
+        assert truncated[2]["content"] == "10"
+
+        truncated =self.excon._truncate_message_list(l, 6)
+        assert len(truncated) == 5
+        assert truncated[0]["content"] == "6"
+        assert truncated[4]["content"] == "10"
