@@ -169,14 +169,14 @@ Sections from the Manual\nA.1(A)(i)(aa)\nB.2(B)(ii)(bb)\n"
     def test__create_system_message(self):
         expected_message = "You are answering questions for an Authorised Dealer (AD) based only on the relevant sections from the 'Currency and Exchange Manual for Authorised Dealers' (Manual or CEMAD) that are provided. You have three options:\n\
 1) Answer the question. Preface an answer with the tag 'ANSWER:'. If possible, end the answer with the reference to the section or sections you used to answer the question.\n\
-2) Request additional documentation. If, in the body of the sections provided, there is a reference to another section of the Manual that is directly relevant and not already provided, respond with the word 'SECTION:' followed by the section reference.\n\
+2) Request additional documentation. If, in the body of the sections provided, there is a reference to another section of the Manual that is directly relevant and not already provided, respond with the word 'SECTION:' followed by the full section reference.\n\
 3) State 'NONE:' and nothing else in all other cases\n\n\
 Note: In the manual sections are numbered like A.1(A) or C.(C)(iii)(c)(cc)(3). The first index uses the regex pattern r'[A-Z]\.\d(0, 2)'. Thereafter, each sub-index is surrounded by round brackets"
         assert self.excon._create_system_message() == expected_message
 
         expected_message = "You are answering questions for an Authorised Dealer with Limited Authority (ADLA) based only on the relevant sections from the 'Currency and Exchange Manual for Authorised Dealers in foreign exchange with limited authority' (Manual or CEMADLA) that are provided. You have three options:\n\
 1) Answer the question. Preface an answer with the tag 'ANSWER:'. If possible, end the answer with the reference to the section or sections you used to answer the question.\n\
-2) Request additional documentation. If, in the body of the sections provided, there is a reference to another section of the Manual that is directly relevant and not already provided, respond with the word 'SECTION:' followed by the section reference.\n\
+2) Request additional documentation. If, in the body of the sections provided, there is a reference to another section of the Manual that is directly relevant and not already provided, respond with the word 'SECTION:' followed by the full section reference.\n\
 3) State 'NONE:' and nothing else in all other cases\n\n\
 Note: In the manual sections are numbered like A.1(A) or C.(C)(iii)(c)(cc)(3). The first index uses the regex pattern r'[A-Z]\.\d(0, 2)'. Thereafter, each sub-index is surrounded by round brackets"
         assert self.adla._create_system_message() == expected_message
@@ -553,12 +553,14 @@ Note: In the manual sections are numbered like A.1(A) or C.(C)(iii)(c)(cc)(3). T
             {"content": "8"},
             {"content": "9"},
             {"content": "10"}]
-        truncated =self.excon._truncate_message_list(l, 2)
-        assert len(truncated) == 3
-        assert truncated[0]["content"] == "8"
-        assert truncated[2]["content"] == "10"
+        system_message = [{"content" : "s"}]
+        truncated =self.excon._truncate_message_list(system_message, l, 2)
+        assert len(truncated) == 2
+        assert truncated[0]["content"] == "s"
+        assert truncated[1]["content"] == "10"
 
-        truncated =self.excon._truncate_message_list(l, 6)
+        truncated =self.excon._truncate_message_list(system_message, l, 6)
         assert len(truncated) == 5
-        assert truncated[0]["content"] == "6"
+        assert truncated[0]["content"] == "s"
+        assert truncated[1]["content"] == "7"
         assert truncated[4]["content"] == "10"

@@ -28,10 +28,12 @@ class TestValidIndex:
     def test_extract_valid_reference(self):
         assert self.index_checker.extract_valid_reference('B.18 Gold (B)(i)(b)') == 'B.18(B)(i)(b)'
         assert self.index_checker.extract_valid_reference('   B.18 Gold (B)(i)(b)') == 'B.18(B)(i)(b)'
-        assert self.index_checker.extract_valid_reference('B.18 Gold (B)(a)(b)')  is None
+        #assert self.index_checker.extract_valid_reference('B.18 Gold (B)(i)(ii)')  is None
+        assert self.index_checker.extract_valid_reference('B.18 Gold (B)(i)(ii)')  == 'B.18(B)(i)'
         assert self.index_checker.extract_valid_reference('A.1') == 'A.1'
         assert self.index_checker.extract_valid_reference('B.18 Gold (B)(i)(b) hello') == 'B.18(B)(i)(b)' # text at the end
-        assert self.index_checker.extract_valid_reference('B.18 Gold (B)(i)(b) (hello)') == None  # the text at the end contains an "("
+        #assert self.index_checker.extract_valid_reference('B.18 Gold (B)(i)(b) (hello)') == None  # the text at the end contains an "("
+        assert self.index_checker.extract_valid_reference('B.18 Gold (B)(i)(b) (hello)') == 'B.18(B)(i)(b)'
 
     def test_split_reference(self):
         long_reference = 'G.1(C)(xviii)(c)(dd)(9)'

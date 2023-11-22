@@ -1,3 +1,5 @@
+import logging
+
 import streamlit as st
 import streamlit_authenticator as stauth # https://blog.streamlit.io/streamlit-authenticator-part-1-adding-an-authentication-component-to-your-app/
 import openai
@@ -11,10 +13,12 @@ from src.chat_bot import ExconManual
 import yaml
 from yaml.loader import SafeLoader
 
+logger = logging.getLogger(__name__)
+
 # App title - Must be furst Streamlit command
 st.set_page_config(page_title="💬 Excon Manual Question Answering")
 
-user_input_api = False
+#user_input_api = False
 
 authenticator = stauth.Authenticate(
     dict(st.secrets['credentials']),
@@ -28,7 +32,7 @@ st.title('Dealer Manual: Question Answering')
 name, authentication_status, username = authenticator.login('Login', 'sidebar') # location is 'sidebar' or 'main'
 buttons = ['Authorised Dealer (AD)', 'AD with Limited Authority (ADLA)']
 
-@st.cache_data(show_spinner=False)
+@st.cache_resource(show_spinner=False)
 def load_data(ad = True):
     # print(f"load data called for {ad}")
     with st.spinner(text="Loading the excon documents and index – hang tight! This should take 30 seconds."):
@@ -37,16 +41,17 @@ def load_data(ad = True):
             path_to_definitions_as_parquet_file = "./inputs/ad_definitions.parquet"
             path_to_index_as_parquet_file = "./inputs/ad_index.parquet"
             chat_for_ad = True
-            log_file = ''
-            log_level = 20
         else:
             path_to_manual_as_csv_file = "./inputs/adla_manual.csv"
             path_to_definitions_as_parquet_file = "./inputs/adla_definitions.parquet"
             path_to_index_as_parquet_file = "./inputs/adla_index.parquet"
             chat_for_ad = False
-            log_file = ''
-            log_level = 20
-        return ExconManual(path_to_manual_as_csv_file, path_to_definitions_as_parquet_file, path_to_index_as_parquet_file, chat_for_ad = chat_for_ad, log_file=log_file, logging_level=log_level)
+
+        log_file = ''
+        log_level = 20
+        excon = ExconManual(path_to_manual_as_csv_file, path_to_definitions_as_parquet_file, path_to_index_as_parquet_file, chat_for_ad = chat_for_ad, log_file=log_file, logging_level=log_level)
+        logger.info(f"Load data called. Loading data for {excon.user_type}")
+        return excon
 
 
 if 'manual_to_use' not in st.session_state:
@@ -84,19 +89,19 @@ if authentication_status:
         
         st.divider()
 
-        if user_input_api:
-            openai_api = st.text_input('Enter OpenAI API token:', type='password')
-            if not (openai_api.startswith('sk-') and len(openai_api)==51):
-                st.warning('Please enter your credentials!', icon='⚠️')
-            else:
-                st.success('Proceed to entering your prompt message!', icon='👉')
-            st.divider()
-        else: 
-            openai.api_key = st.secrets['openai']['OPENAI_API_KEY'] #
-            openai_api = st.secrets['openai']['OPENAI_API_KEY']
+        # if user_input_api:
+        #     openai_api = st.text_input('Enter OpenAI API token:', type='password')
+        #     if not (openai_api.startswith('sk-') and len(openai_api)==51):
+        #         st.warning('Please enter your credentials!', icon='⚠️')
+        #     else:
+        #         st.success('Proceed to entering your prompt message!', icon='👉')
+        #     st.divider()
+        # else: 
+        openai.api_key = st.secrets['openai']['OPENAI_API_KEY'] #
+        openai_api = st.secrets['openai']['OPENAI_API_KEY']
 
         #st.subheader('Models and parameters')
-        selected_model = st.sidebar.selectbox('Choose a model', ['gpt-3.5-turbo', 'gpt-4-1106-preview', 'gpt-4'], key='selected_model')
+        selected_model = st.sidebar.selectbox('Choose a model', ['gpt-3.5-turbo', 'gpt-4'], key='selected_model')
         temperature = st.sidebar.slider('temperature', min_value=0.00, max_value=2.0, value=0.0, step=0.01)
         max_length = st.sidebar.slider('max_length', min_value=32, max_value=2048, value=512, step=8)
         st.divider()
@@ -120,16 +125,18 @@ if authentication_status:
 
 
     # User-provided prompt
-    if prompt := st.chat_input(disabled=not openai_api): 
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.write(prompt)
+    if prompt := st.chat_input(disabled= not openai_api):
+        logger.info(f"st.chat_input() called. Value returned is {prompt}")
+        if prompt and prompt != "":
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            with st.chat_message("user"):
+                st.write(prompt)
 
     # Generate a new response if last message is not from assistant
     if len(st.session_state.messages) > 0 and st.session_state.messages[-1]["role"] != "assistant":
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
-                #print(f'##### {prompt}')
+                logger.info(f"Making call to excon manual with prompt: {prompt}")
                 st.session_state['excon'].user_provides_input(user_context = prompt, 
                                 threshold = 0.15, 
                                 model_to_use = selected_model, 
