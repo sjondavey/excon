@@ -6,28 +6,6 @@ from src.chat_bot import ExconManual
 
 st.title('Dealer Manual: Section Lookup')
 
-# @st.cache_resource(show_spinner=False)
-# def load_data(ad = True):
-#     with st.spinner(text="Loading the excon documents and index – hang tight! This should take 30 seconds."):
-#         if ad:
-#             path_to_manual_as_csv_file = "./inputs/ad_manual.csv"
-#             path_to_definitions_as_parquet_file = "./inputs/ad_definitions.parquet"
-#             path_to_index_as_parquet_file = "./inputs/ad_index.parquet"
-#             chat_for_ad = True
-#             log_file = ''
-#             log_level = 20
-#         else:
-#             path_to_manual_as_csv_file = "./inputs/adla_manual.csv"
-#             path_to_definitions_as_parquet_file = "./inputs/adla_definitions.parquet"
-#             path_to_index_as_parquet_file = "./inputs/adla_index.parquet"
-#             chat_for_ad = False
-#             log_file = ''
-#             log_level = 20
-
-#         excon = ExconManual(path_to_manual_as_csv_file, path_to_definitions_as_parquet_file, path_to_index_as_parquet_file, chat_for_ad = chat_for_ad, log_file=log_file, logging_level=log_level)
-#         return excon
-
-# excon = load_data(ad = True)
 
 with st.sidebar:
     st.title('💬 Dealer Manual section lookup')

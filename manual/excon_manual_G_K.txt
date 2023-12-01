@@ -931,7 +931,7 @@ J. FinSurv Reporting System (#Heading)
 
             Exports : Advance payments see table 10
             #Table 10
-                101 | 01 | Export | advance payment (excluding capital goods, gold, platinum, crude oil, refined petroleum products, diamonds, steel, coal, iron ore and goods exported via the South African Post Office)
+                101 | 01 | Export advance payment (excluding capital goods, gold, platinum, crude oil, refined petroleum products, diamonds, steel, coal, iron ore and goods exported via the South African Post Office)
                 101 | 02 | Export advance payment - capital goods
                 101 | 03 | Export advance payment – gold
                 101 | 04 | Export advance payment – platinum
@@ -1015,7 +1015,7 @@ J. FinSurv Reporting System (#Heading)
                 203 | Rights assigned for using patterns and designs (including industrial processes)
                 204 | Rights assigned for using copyrights
                 205 | Rights assigned for using franchises and trademarks
-            #table 14 - end            
+            #Table 14 - end            
 
             Disposal of intellectual property (excluding computer related and audiovisual) 210 Disposal of patents and inventions see table 15
             #Table 15
@@ -1079,7 +1079,7 @@ J. FinSurv Reporting System (#Heading)
             #Table 22
             260 | Proceeds for travel services in respect of third parties - business travel
             261 | Proceeds for travel services in respect of third parties - holiday travel
-            #Table 22 end
+            #Table 22 - end
 
             Telecommunication and information services see table 23
             #Table 23
@@ -1116,7 +1116,7 @@ J. FinSurv Reporting System (#Heading)
             Construction services see table 26
             #Table 26
             280 | Proceeds for construction services 
-            #Table 36 - end
+            #Table 26 - end
 
             Government services see table 27
             #Table 27
@@ -1269,7 +1269,6 @@ J. FinSurv Reporting System (#Heading)
             
             Disinvestment of capital to a resident Foreign Currency account see table 39
             #Table 39
-            (Note: Categories 511/01 to 511/07 must be used)
             514 | 01 | Not allocated
             514 | 02 | Not allocated
             514 | 03 | Not allocated
@@ -1279,6 +1278,7 @@ J. FinSurv Reporting System (#Heading)
             514 | 07 | Not allocated
             514 | 08 | Not allocated
             #Table 39 - end
+            (Note: Categories 511/01 to 511/07 must be used)
 
             Disinvestment of capital see table 40
             #Table 40
@@ -1306,7 +1306,7 @@ J. FinSurv Reporting System (#Heading)
             530 | 08 | Not allocated
             531 | | Not allocated
             532 | | Not allocated
-            #Table 40 - end
+            #Table 41 - end
 
         (vi) Financial investments/disinvestments and prudential investments  (#Heading)
 
@@ -1818,7 +1818,6 @@ J. FinSurv Reporting System (#Heading)
             
             Investment from a resident Foreign Currency account see table 85
             #Table 85
-            (Note: Categories 511/01 to 511/07 must be used)
             514 01 Not allocated
             514 02 Not allocated
             514 03 Not allocated
@@ -1828,10 +1827,10 @@ J. FinSurv Reporting System (#Heading)
             514 07 Not allocated
             514 08 Not allocated
             #Table 85 - end
+            (Note: Categories 511/01 to 511/07 must be used)
 
             Re-transfer of capital repatriated see table 86
             #Table 86
-            (Note: Categories 511/01 to 511/07 must be used)
             515 01 Not allocated
             515 02 Not allocated
             515 03 Not allocated
@@ -1843,6 +1842,7 @@ J. FinSurv Reporting System (#Heading)
             516 Not allocated
             517 Not allocated
             #Table 86 - end
+            (Note: Categories 511/01 to 511/07 must be used)
 
             Emigrants see table 87
             #Table 87
@@ -1864,9 +1864,9 @@ J. FinSurv Reporting System (#Heading)
             600 Adjustments / Reversals / Refunds related to financial investments/disinvestments and prudential investments
             #Table 88 - end
 
-            Financial investments/disinvestments (excluding local institutional investors) see table 89
+            Financial investments/disinvestments (excluding local institutional investors) 
+            Disinvestment by a non-resident see table 89
             #Table 89
-            Disinvestment by a non-resident
             601 01 Listed shares - sale proceeds paid to a non-resident
             601 02 Non-listed shares - sale proceeds paid to a non-resident
             602 Disinvestment of money market instruments by a non-resident
@@ -1927,7 +1927,7 @@ J. FinSurv Reporting System (#Heading)
             700 Adjustments / Reversals / Refunds related to derivatives
             #Table 93 - end
 
-            Derivatives (excluding inward listed)see table 94
+            Derivatives (excluding inward listed) see table 94
             #Table 94
             701 01 Options – listed
             701 02 Options – unlisted
@@ -1949,15 +1949,15 @@ J. FinSurv Reporting System (#Heading)
             800 Adjustments / Reversals / Refunds related to loan and miscellaneous payments
             #Table 95 - end
 
-            Loans (capital portion) see table 96
+            Loans (capital portion) 
+            Loan repayments by residents see table 96
             #Table 96
-            Loan repayments by residents
             801 Repayment of trade finance drawn down in South Africa
             802 Repayment of an international Bond drawn down
             803 Repayment by a resident of a loan received from a non-resident shareholder
             804 Repayment by a resident of a loan received from a non-resident third party
             805 Not allocated
-            #Table 96
+            #Table 96 - end
 
             Loans granted to residents temporarily abroad see table 97
             #Table 97
